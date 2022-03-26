@@ -2,7 +2,7 @@ import json
 import requests
 import pprint
 headers ={
-    'referer': 'https://www.bilibili.com/video/BV1zb411i7YD?spm_id_from=333.999.0.0',
+    'referer': 'https://www.bilibili.com/video/BV1t3411p7Vq?spm_id_from=444.41.0.0',
     'user-agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36 Edg/95.0.1020.53',
 }
 main_url = 'https://api.bilibili.com/x/v2/reply/main?'
@@ -30,6 +30,8 @@ def parse_reply(root):
     requests.get(url=reply_url, headers=headers, params=reply_params).json()
 def parse_main_reply():
     page_text = requests.get(url = main_url, headers = headers,params = main_params).json()
+    with open('test.html','w',encoding='utf-8') as fp:
+        fp.write(page_text)
     for comment in page_text['data']['replies']:
         dic['username'] = comment['member']['uname']
         dic['content'] = comment['content']['message']
