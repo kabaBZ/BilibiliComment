@@ -1,5 +1,6 @@
 import json
 import requests
+from decimal import Decimal
 import pprint
 headers ={
     'referer': 'https://www.bilibili.com/video/BV1t3411p7Vq?spm_id_from=444.41.0.0',
@@ -8,10 +9,10 @@ headers ={
 main_url = 'https://api.bilibili.com/x/v2/reply/main?'
 main_params = {
     'jsonp': 'jsonp',
-    'next': 0,
+    'next': 1,
     'type': '1',
     'oid': '425009881',
-    'mode': '2',
+    'mode': '3',
     'plat': '1',
     '_': '1648289436898'
 }
@@ -21,30 +22,53 @@ reply_params = {
     'pn': '1',
     'type': '1',
     'oid': '425009881',
-    'ps': '10',
+    'ps': '100',
     'root': '106841868432',
     '_': '1648290346968'
 }
+proxies={
+    'http':'20.24.65.59:6655'
+}
 dic = {}
-def parse_reply(root):
-    requests.get(url=reply_url, headers=headers, params=reply_params).json()
-def parse_main_reply():
-    page_text = requests.get(url = main_url, headers = headers,params = main_params).json()
-    with open('test.html','w',encoding='utf-8') as fp:
-        fp.write(page_text)
-    for comment in page_text['data']['replies']:
+dic['count'] = Decimal('0')
+def parse_reply(root,ps,count):
+    reply_params['root'] = root
+    reply_params['ps'] = ps
+    response = requests.get(url=reply_url, headers=headers, params=reply_params)
+    page_text_json = response.json()
+    for comment in page_text_json['data']['replies']:
+        dic['count'] += Decimal('0.0001')
         dic['username'] = comment['member']['uname']
         dic['content'] = comment['content']['message']
-        dic['reply_count'] = comment['rcount']
-        dic['reply_id'] = comment['rpid']
         dic['like_count'] = comment['like']
-        dic['total_reply_num'] = page_text['data']['cursor']['all_count']
-        dic['is_end'] = page_text['data']['cursor']['is_end']
         print(dic)
-        f.write(str(dic['username'])+dic['content']+str(dic['reply_count'])+str(dic['reply_id'])+str(dic['like_count'])+str(dic['total_reply_num'])+str(dic['is_end'])+'\n')
-    if dic['is_end'] == False:
+        f.write(str(dic['count']) + str(dic['username']) + str(dic['content']) + str(dic['like_count']) + '\n')
+    dic['count'] = count
+def parse_main_reply():
+    response = requests.get(url = main_url, headers = headers,params = main_params)
+    page_text = response.text
+    page_text_json = response.json()
+    with open('test.html','w',encoding='utf-8') as fp:
+        fp.write(page_text)
+    fp.close()
+    if page_text_json['data']['cursor']['is_end'] == False:
+        for comment in page_text_json['data']['replies']:
+            dic['count'] += Decimal('1')
+            dic['username'] = comment['member']['uname']
+            dic['content'] = comment['content']['message']
+            dic['reply_count'] = comment['rcount']
+            dic['reply_id'] = comment['rpid']
+            dic['like_count'] = comment['like']
+            dic['total_reply_num'] = page_text_json['data']['cursor']['all_count']
+            dic['is_end'] = page_text_json['data']['cursor']['is_end']
+            print(dic)
+            f.write(str(dic['count'])+str(dic['username'])+str(dic['content'])+str(dic['reply_count'])+str(dic['reply_id'])+str(dic['like_count'])+str(dic['total_reply_num'])+str(dic['is_end'])+'\n')
+            if dic['reply_count'] != 0:
+                parse_reply(dic['reply_id'],dic['reply_count'],dic['count'])
         main_params['next'] += 1
         return parse_main_reply()
-f = open('test','a',encoding='utf-8')
+    elif page_text_json['data']['cursor']['is_end'] == True:
+        print('结束')
+f = open('test.txt','a',encoding='utf-8')
 parse_main_reply()
 f.close()
