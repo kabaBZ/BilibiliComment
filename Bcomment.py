@@ -31,6 +31,7 @@ proxies={
 }
 dic = {}
 dic['count'] = Decimal('0')
+#楼中楼
 def parse_reply(root,ps,count):
     reply_params['root'] = root
     reply_params['ps'] = ps
@@ -44,6 +45,7 @@ def parse_reply(root,ps,count):
         print(dic)
         f.write(str(dic['count']) + str(dic['username']) + str(dic['content']) + str(dic['like_count']) + '\n')
     dic['count'] = count
+#评论楼层
 def parse_main_reply():
     response = requests.get(url = main_url, headers = headers,params = main_params)
     page_text = response.text
